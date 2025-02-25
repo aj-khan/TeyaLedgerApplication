@@ -1,11 +1,27 @@
 package com.teya.ledger.model;
 
-import java.time.LocalDateTime;
-
 public class TransactionRequest {
     private TransactionType type;
     private double amount;
-    private int acountNo;
+    private int source;
+    private int target;
+    private boolean isSelfTransaction;
+
+    public int getTarget() {
+        return target;
+    }
+
+    public void setTarget(int target) {
+        this.target = target;
+    }
+
+    public boolean isSelfTransaction() {
+        return isSelfTransaction;
+    }
+
+    public void setSelfTransaction(boolean selfTransaction) {
+        isSelfTransaction = selfTransaction;
+    }
 
     public TransactionType getType() {
         return type;
@@ -23,11 +39,11 @@ public class TransactionRequest {
         this.amount = amount;
     }
 
-    public int getAcountNo() {
-        return acountNo;
+    public int getSource() {
+        return source;
     }
 
-    public void setAcountNo(int acountNo) {
-        this.acountNo = acountNo;
+    public void setSource(int acountNo) {
+        this.source = acountNo;
     }
 }

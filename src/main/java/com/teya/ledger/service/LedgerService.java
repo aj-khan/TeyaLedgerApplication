@@ -17,26 +17,53 @@ public class LedgerService {
 
     public void recordTransaction(TransactionRequest transactionRequest) {
         System.out.println("this is");
-        if (transactionRequest.getType() == TransactionType.WITHDRAWAL && currentBalance.get(transactionRequest.getAcountNo()) <transactionRequest.getAmount() ) {
+        if (transactionRequest.getType() == TransactionType.WITHDRAWAL && currentBalance.getOrDefault(transactionRequest.getSource(),0.0) <transactionRequest.getAmount() ) {
+            throw new InsufficientFundsException("Insufficient balance for the withdrawal");
+        }
+        if (!transactionRequest.isSelfTransaction() && transactionRequest.getType() == TransactionType.DEPOSIT && currentBalance.getOrDefault(transactionRequest.getSource(),0.0) <transactionRequest.getAmount() ) {
             throw new InsufficientFundsException("Insufficient balance for the withdrawal");
         }
         if (transactionRequest.getAmount() <= 0) {
             throw new InvalidFundsException("Invalid amount for the transaction");
         }
+        List<Transaction> list=transactions.getOrDefault(transactionRequest.getSource(),new ArrayList<>());
+        List<Transaction> toList=transactions.getOrDefault(transactionRequest.getTarget(),new ArrayList<>());
+        if(transactionRequest.isSelfTransaction()) {
+            if (transactionRequest.getType() == TransactionType.DEPOSIT) {
+                double current = currentBalance.getOrDefault(transactionRequest.getSource(), 0.0) + transactionRequest.getAmount();
+                currentBalance.put(transactionRequest.getSource(), current);
 
+            } else if (transactionRequest.getType() == TransactionType.WITHDRAWAL) {
+                double current = currentBalance.getOrDefault(transactionRequest.getSource(), 0.0) - transactionRequest.getAmount();
+                currentBalance.put(transactionRequest.getSource(), current);
+            }
+            Transaction newTransaction = new Transaction(UUID.randomUUID().toString(), transactionRequest.getType(), transactionRequest.getAmount());
+            list.add(newTransaction);
+        }else {
+            if (transactionRequest.getType() == TransactionType.DEPOSIT) {
+                double source = currentBalance.getOrDefault(transactionRequest.getSource(), 0.0) - transactionRequest.getAmount();
+                currentBalance.put(transactionRequest.getSource(), source);
+                Transaction src = new Transaction(UUID.randomUUID().toString(), TransactionType.WITHDRAWAL, transactionRequest.getAmount());
+                list.add(src);
+                double target = currentBalance.getOrDefault(transactionRequest.getTarget(), 0.0) + transactionRequest.getAmount();
+                currentBalance.put(transactionRequest.getTarget(), target);
+                Transaction tgt = new Transaction(UUID.randomUUID().toString(), TransactionType.DEPOSIT, transactionRequest.getAmount());
+                toList.add(tgt);
 
-        if (transactionRequest.getType() == TransactionType.DEPOSIT) {
-            double current= currentBalance.get(transactionRequest.getAcountNo()) +transactionRequest.getAmount();
-            currentBalance.put(transactionRequest.getAcountNo(),current);
-
-        } else if (transactionRequest.getType() == TransactionType.WITHDRAWAL) {
-            double current= currentBalance.get(transactionRequest.getAcountNo()) - transactionRequest.getAmount();
-            currentBalance.put(transactionRequest.getAcountNo(),current);
+            } else if (transactionRequest.getType() == TransactionType.WITHDRAWAL) {
+                double source = currentBalance.getOrDefault(transactionRequest.getSource(), 0.0) + transactionRequest.getAmount();
+                currentBalance.put(transactionRequest.getSource(), source);
+                Transaction src = new Transaction(UUID.randomUUID().toString(), TransactionType.DEPOSIT, transactionRequest.getAmount());
+                list.add(src);
+                double target = currentBalance.getOrDefault(transactionRequest.getTarget(), 0.0) - transactionRequest.getAmount();
+                currentBalance.put(transactionRequest.getTarget(), target);
+                Transaction tgt = new Transaction(UUID.randomUUID().toString(), TransactionType.WITHDRAWAL, transactionRequest.getAmount());
+                toList.add(tgt);
+            }
+            transactions.put(transactionRequest.getTarget(),toList);
         }
-        Transaction newTransaction = new Transaction(UUID.randomUUID().toString(), transactionRequest.getType(), transactionRequest.getAmount());
-        List<Transaction> list=transactions.get(transactionRequest.getAcountNo());
-        list.add(newTransaction);
-        transactions.put(transactionRequest.getAcountNo(),list);
+
+        transactions.put(transactionRequest.getSource(),list);
     }
 
     public double getCurrentBalance(int accountNo) {
