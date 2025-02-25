@@ -3,41 +3,48 @@ package com.teya.ledger.service;
 import com.teya.ledger.exception.InsufficientFundsException;
 import com.teya.ledger.exception.InvalidFundsException;
 import com.teya.ledger.model.Transaction;
+import com.teya.ledger.model.TransactionRequest;
 import com.teya.ledger.model.TransactionType;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 public class LedgerService {
-    private List<Transaction> transactions = new ArrayList<>();
-    private double currentBalance = 0;
+    private static Map<Integer,List<Transaction>> transactions = new HashMap<>();
+    private static Map<Integer,Double> currentBalance = new HashMap<>();
 
-    public void recordTransaction(Transaction transaction) {
-        if (transaction.getType() == TransactionType.WITHDRAWAL && transaction.getAmount() > currentBalance) {
+    public void recordTransaction(TransactionRequest transactionRequest) {
+        System.out.println("this is");
+        if (transactionRequest.getType() == TransactionType.WITHDRAWAL && currentBalance.get(transactionRequest.getAcountNo()) <transactionRequest.getAmount() ) {
             throw new InsufficientFundsException("Insufficient balance for the withdrawal");
         }
-        if (transaction.getAmount() <= 0) {
+        if (transactionRequest.getAmount() <= 0) {
             throw new InvalidFundsException("Invalid amount for the transaction");
         }
 
 
-        if (transaction.getType() == TransactionType.DEPOSIT) {
-            currentBalance += transaction.getAmount();
-        } else if (transaction.getType() == TransactionType.WITHDRAWAL) {
-            currentBalance -= transaction.getAmount();
+        if (transactionRequest.getType() == TransactionType.DEPOSIT) {
+            double current= currentBalance.get(transactionRequest.getAcountNo()) +transactionRequest.getAmount();
+            currentBalance.put(transactionRequest.getAcountNo(),current);
+
+        } else if (transactionRequest.getType() == TransactionType.WITHDRAWAL) {
+            double current= currentBalance.get(transactionRequest.getAcountNo()) - transactionRequest.getAmount();
+            currentBalance.put(transactionRequest.getAcountNo(),current);
         }
-        Transaction newTransaction = new Transaction(UUID.randomUUID().toString(), transaction.getType(), transaction.getAmount());
-        transactions.add(newTransaction);
+        Transaction newTransaction = new Transaction(UUID.randomUUID().toString(), transactionRequest.getType(), transactionRequest.getAmount());
+        List<Transaction> list=transactions.get(transactionRequest.getAcountNo());
+        list.add(newTransaction);
+        transactions.put(transactionRequest.getAcountNo(),list);
     }
 
-    public double getCurrentBalance() {
-        return currentBalance;
+    public double getCurrentBalance(int accountNo) {
+        return currentBalance.getOrDefault(accountNo,-1.0);
     }
 
-    public List<Transaction> getTransactionHistory() {
-        return transactions;
+    public List<Transaction> getTransactionHistory(int accountNo) {
+        if(transactions.get(accountNo).isEmpty())
+            return Arrays.asList(new Transaction());
+        return transactions.get(accountNo);
     }
 }

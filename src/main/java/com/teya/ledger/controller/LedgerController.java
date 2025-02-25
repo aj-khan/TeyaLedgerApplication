@@ -3,6 +3,7 @@ package com.teya.ledger.controller;
 import com.teya.ledger.exception.InsufficientFundsException;
 import com.teya.ledger.exception.InvalidFundsException;
 import com.teya.ledger.model.Transaction;
+import com.teya.ledger.model.TransactionRequest;
 import com.teya.ledger.service.LedgerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -18,7 +19,7 @@ public class LedgerController {
     private LedgerService ledgerService;
 
     @PostMapping("/transactions")
-    public ResponseEntity<String> recordTransaction(@RequestBody Transaction transaction) {
+    public ResponseEntity<String> recordTransaction(@RequestBody TransactionRequest transaction) {
         try {
             ledgerService.recordTransaction(transaction);
             return ResponseEntity.ok("Transaction recorded successfully");
@@ -30,13 +31,14 @@ public class LedgerController {
     }
 
     @GetMapping("/balance")
-    public double getCurrentBalance() {
-        return ledgerService.getCurrentBalance();
+    public double getCurrentBalance(@RequestParam(name = "accountNo") int accountNo ){
+
+        return ledgerService.getCurrentBalance(accountNo);
     }
 
     @GetMapping("/history")
-    public ResponseEntity<?> getTransactionHistory() {
-        List<Transaction> transactions = ledgerService.getTransactionHistory();
+    public ResponseEntity<?> getTransactionHistory(@RequestParam(name = "accountNo") int accountNo ) {
+        List<Transaction> transactions = ledgerService.getTransactionHistory(accountNo);
         if (transactions.isEmpty()) {
             return ResponseEntity.ok("No transactions to display");
         }

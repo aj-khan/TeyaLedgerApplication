@@ -8,6 +8,7 @@
         private double amount;
         private LocalDateTime transactionTime;
 
+
         public Transaction(){
 
         }
