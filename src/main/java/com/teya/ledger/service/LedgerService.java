@@ -6,6 +6,7 @@ import com.teya.ledger.model.Transaction;
 import com.teya.ledger.model.TransactionRequest;
 import com.teya.ledger.model.TransactionType;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 
 import java.util.*;
 
@@ -39,11 +40,11 @@ public class LedgerService {
     }
 
     public double getCurrentBalance(int accountNo) {
-        return currentBalance.getOrDefault(accountNo,-1.0);
+        return currentBalance.getOrDefault(accountNo,0.0);
     }
 
     public List<Transaction> getTransactionHistory(int accountNo) {
-        if(transactions.get(accountNo).isEmpty())
+        if(ObjectUtils.isEmpty(transactions) )
             return Arrays.asList(new Transaction());
         return transactions.get(accountNo);
     }
